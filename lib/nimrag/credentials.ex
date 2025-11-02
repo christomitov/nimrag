@@ -315,17 +315,28 @@ defimpl Inspect, for: Nimrag.Credentials do
         %Credentials{username: username},
         opts
       ) do
-    details =
-      Inspect.List.inspect(
-        [
-          username:
-            (username |> String.split("@", trim: true) |> List.first() |> String.slice(0, 5)) <>
-              "...",
-          password: "*****"
-        ],
+    masked_username =
+      case username do
+        nil ->
+          nil
+
+        value ->
+          value
+          |> String.split("@", trim: true)
+          |> List.first()
+          |> String.slice(0, 5)
+          |> Kernel.<>("...")
+      end
+
+    {details_doc, _opts} =
+      Inspect.Map.inspect(
+        %{username: masked_username, password: "*****"},
         opts
       )
 
-    concat(["#Nimrag.Credentials<", details, ">"])
+    "#Nimrag.Credentials<"
+    |> string()
+    |> concat(details_doc)
+    |> concat(string(">"))
   end
 end

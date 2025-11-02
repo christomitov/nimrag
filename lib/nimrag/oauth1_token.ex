@@ -27,17 +27,26 @@ defimpl Inspect, for: Nimrag.OAuth1Token do
         %OAuth1Token{oauth_token: oauth_token, mfa_token: mfa_token} = token,
         opts
       ) do
-    details =
-      Inspect.List.inspect(
-        [
-          oauth_token: String.slice(oauth_token || "", 0, 5) <> "...",
-          mfa_token: String.slice(mfa_token || "", 0, 5) <> "...",
+    mask = fn
+      nil -> nil
+      "" -> ""
+      value -> String.slice(value, 0, 5) <> "..."
+    end
+
+    {details_doc, _opts} =
+      Inspect.Map.inspect(
+        %{
+          oauth_token: mask.(oauth_token),
+          mfa_token: mask.(mfa_token),
           expired?: OAuth1Token.expired?(token),
           expires_at: token.expires_at
-        ],
+        },
         opts
       )
 
-    concat(["#Nimrag.OAuth1Token<", details, ">"])
+    "#Nimrag.OAuth1Token<"
+    |> string()
+    |> concat(details_doc)
+    |> concat(string(">"))
   end
 end

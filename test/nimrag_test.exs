@@ -38,6 +38,19 @@ defmodule NimragTest do
     assert {:ok, _user_settings, _client} = Nimrag.user_settings(client())
   end
 
+  test "#heart_rate_daily" do
+    Req.Test.stub(Nimrag.Api, fn conn ->
+      Req.Test.json(conn, read_response_fixture(conn))
+    end)
+
+    assert {:ok, heart_rate, _client} =
+             Nimrag.heart_rate_daily(client(), ~D|2024-06-15|)
+
+    assert heart_rate.resting_heart_rate == 51
+    assert [%{timestamp: ts, bpm: 64, source: "GARMIN_DEVICE"} | _] = heart_rate.points
+    assert %DateTime{} = ts
+  end
+
   test "#steps_weekly" do
     Req.Test.stub(Nimrag.Api, fn conn ->
       Req.Test.json(conn, read_response_fixture(conn))

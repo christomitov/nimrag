@@ -67,6 +67,10 @@ client = Nimrag.Client.new() |> Nimrag.Client.with_auth(Nimrag.Credentials.read_
 
 # Call at the end of the session to cache new OAuth2 token
 :ok = Nimrag.Credentials.write_fs_oauth2_token(client)
+
+# Fetch all-day heart rate for a calendar date
+{:ok, %Nimrag.Api.HeartRateDaily{} = hr, client} = Nimrag.heart_rate_daily(client, ~D[2024-06-15])
+Enum.take(hr.points, 3)
 ```
 
 ### Fallback to raw responses

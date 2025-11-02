@@ -1,0 +1,12 @@
+{
+  "calendarDate": "2024-06-15",
+  "restingHeartRate": 51,
+  "maxHeartRate": 163,
+  "minHeartRate": 45,
+  "heartRateValues": [
+    [1718409600000, 64, "GARMIN_DEVICE"],
+    [1718410200000, 62],
+    [1718410800000, 60],
+    [1718411400000, 58]
+  ]
+}

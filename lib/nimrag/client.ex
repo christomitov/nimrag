@@ -128,16 +128,19 @@ defimpl Inspect, for: Nimrag.Client do
         %Client{} = client,
         opts
       ) do
-    details =
-      Inspect.List.inspect(
-        [
+    {details_doc, _opts} =
+      Inspect.Map.inspect(
+        %{
           domain: client.domain,
           oauth1_token: client.oauth1_token && "#Nimrag.OAuth1Token<...>",
           oauth2_token: client.oauth2_token && "#Nimrag.OAuth2Token<...>"
-        ],
+        },
         opts
       )
 
-    concat(["#Nimrag.Client<", details, ">"])
+    "#Nimrag.Client<"
+    |> string()
+    |> concat(details_doc)
+    |> concat(string(">"))
   end
 end

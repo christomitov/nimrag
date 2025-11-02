@@ -202,6 +202,36 @@ defmodule Nimrag do
     do: get(client, url: "/userprofile-service/userprofile/user-settings")
 
   @doc """
+  Gets all-day heart rate samples for a given date.
+  """
+  @spec heart_rate_daily(Client.t()) ::
+          {:ok, Api.HeartRateDaily.t(), Client.t()} | error()
+  @spec heart_rate_daily(Client.t(), Date.t() | String.t()) ::
+          {:ok, Api.HeartRateDaily.t(), Client.t()} | error()
+  def heart_rate_daily(client, date \\ Date.utc_today())
+
+  def heart_rate_daily(client, %Date{} = date),
+    do: heart_rate_daily(client, Date.to_iso8601(date))
+
+  def heart_rate_daily(client, date) when is_binary(date) do
+    with {:ok, resp, client} <- heart_rate_daily_req(client, date),
+         {:ok, data} <- Api.HeartRateDaily.from_api_response(resp.body) do
+      {:ok, data, client}
+    end
+  end
+
+  @doc false
+  def heart_rate_daily_req(client, %Date{} = date),
+    do: heart_rate_daily_req(client, Date.to_iso8601(date))
+
+  def heart_rate_daily_req(client, date) when is_binary(date) do
+    get(client,
+      url: "/wellness-service/wellness/dailyHeartRate",
+      params: [date: date]
+    )
+  end
+
+  @doc """
   Gets sleep data for a given day.
   """
   @spec sleep_daily(Client.t(), username :: String.t()) ::

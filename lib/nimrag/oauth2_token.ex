@@ -38,19 +38,28 @@ defimpl Inspect, for: Nimrag.OAuth2Token do
         %OAuth2Token{access_token: access_token, refresh_token: refresh_token} = token,
         opts
       ) do
-    details =
-      Inspect.List.inspect(
-        [
-          access_token: String.slice(access_token || "", 0, 5) <> "...",
-          refresh_token: String.slice(refresh_token || "", 0, 5) <> "...",
+    mask = fn
+      nil -> nil
+      "" -> ""
+      value -> String.slice(value, 0, 5) <> "..."
+    end
+
+    {details_doc, _opts} =
+      Inspect.Map.inspect(
+        %{
+          access_token: mask.(access_token),
+          refresh_token: mask.(refresh_token),
           expires_at: token.expires_at,
           expired?: OAuth2Token.expired?(token),
           refresh_token_expires_at: token.refresh_token_expires_at,
           refresh_token_expired?: OAuth2Token.refresh_token_expired?(token)
-        ],
+        },
         opts
       )
 
-    concat(["#Nimrag.OAuth2Token<", details, ">"])
+    "#Nimrag.OAuth2Token<"
+    |> string()
+    |> concat(details_doc)
+    |> concat(string(">"))
   end
 end
