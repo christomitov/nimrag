@@ -196,7 +196,7 @@ defmodule Nimrag.Auth do
       uri = response |> get_location() |> URI.parse()
 
       sso.client
-      |> Req.Request.put_header("cookie", Enum.uniq(cookie ++ get_cookie(response)))
+      |> put_cookie_header(Enum.uniq(cookie ++ get_cookie(response)))
       |> Req.Request.put_header(
         "referer",
         "#{sso.url}/verifyMFA/loginEnterMfaCode"
@@ -231,6 +231,23 @@ defmodule Nimrag.Auth do
   defp get_location(%Req.Response{} = response),
     do: List.first(Req.Response.get_header(response, "location")) || ""
 
+  defp put_cookie_header(request, cookie) do
+    case cookie_header(cookie) do
+      "" -> request
+      value -> Req.Request.put_header(request, "cookie", value)
+    end
+  end
+
+  defp cookie_header(cookie) when is_list(cookie) do
+    cookie
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join("; ")
+  end
+
+  defp cookie_header(cookie) when is_binary(cookie), do: String.trim(cookie)
+  defp cookie_header(_), do: ""
+
   defp get_csrf_token(%Req.Response{body: body, status: 200}) do
     case Regex.scan(~r/name="_csrf"\s+value="(.+?)"/, body) do
       [[_, csrf_token]] -> {:ok, csrf_token}
@@ -249,7 +266,7 @@ defmodule Nimrag.Auth do
 
   defp submit_mfa_req(sso, csrf_token, cookie, mfa_code) do
     sso.client
-    |> Req.Request.put_header("cookie", cookie)
+    |> put_cookie_header(cookie)
     |> Req.Request.put_header("referer", "#{sso.url}/verifyMFA")
     |> Req.post(
       url: "/verifyMFA/loginEnterMfaCode",
@@ -270,7 +287,7 @@ defmodule Nimrag.Auth do
 
   defp get_mfa(sso, cookie, retry) do
     sso.client
-    |> Req.Request.put_header("cookie", cookie)
+    |> put_cookie_header(cookie)
     |> Req.Request.put_header("referer", "#{sso.url}/signin")
     |> Req.get(
       url: "/verifyMFA/loginEnterMfaCode",
@@ -295,7 +312,7 @@ defmodule Nimrag.Auth do
 
   defp signin_req(sso, %Req.Response{} = prev_resp) do
     sso.client
-    |> Req.Request.put_header("cookie", get_cookie(prev_resp))
+    |> put_cookie_header(get_cookie(prev_resp))
     |> Req.Request.put_header("referer", "#{sso.url}/embed")
     |> Req.get(
       url: "/signin",
@@ -307,7 +324,7 @@ defmodule Nimrag.Auth do
   defp submit_signin_req(sso, %Req.Response{} = prev_resp, credentials) do
     with {:ok, csrf_token} <- get_csrf_token(prev_resp) do
       sso.client
-      |> Req.Request.put_header("cookie", get_cookie(prev_resp))
+      |> put_cookie_header(get_cookie(prev_resp))
       |> Req.Request.put_header("referer", "#{sso.url}/signin")
       |> Req.post(
         url: "/signin",
